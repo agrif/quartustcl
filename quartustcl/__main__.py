@@ -12,7 +12,7 @@ kwargs = {
     'debug': args.debug,
 }
 if args.subprocess:
-    kwargs['cmd'] = args.subprocess
+    kwargs['args'] = args.subprocess
 
 quartus = quartustcl.QuartusTcl(**kwargs)
 banner = 'the local variable `quartus` is a running QuartusTcl session'

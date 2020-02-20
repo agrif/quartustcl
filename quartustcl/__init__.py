@@ -6,7 +6,7 @@ import tkinter
 
 class QuartusTcl:
     """A class for managing a Quartus Tcl interpreter as a subprocess."""
-    def __init__(self, cmd=['quartus_stp', '-s'], debug=False):
+    def __init__(self, args=['quartus_stp', '-s'], debug=False):
         self.debug = debug
 
         # we need to use some special variables to store and detect errors
@@ -18,7 +18,7 @@ class QuartusTcl:
 
         # we launch a single instance of the quartus tcl shell, and then
         # talk to it line by line
-        self.process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     def interact(self, line):
         """Write one line to the Tcl interpreter, and read one line out."""
@@ -103,7 +103,7 @@ class QuartusTcl:
         # construct the full command by formatting-in our later arguments
         # but -- quote them in braces first!
         if args:
-            cmd = cmd.format(*['{' + a + '}' for a in args])
+            cmd = cmd.format(*['{' + str(a) + '}' for a in args])
 
         return self.parse(self.interact(cmd))
 

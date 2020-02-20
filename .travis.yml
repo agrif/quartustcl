@@ -1,0 +1,14 @@
+language: python
+python:
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
+before_install:
+  # our tests use tclsh, not quartus itself, for portability
+  - sudo apt-get -y install tcl
+install:
+  - pip install .
+script:
+  - python -m tests
+  - python setup.py sdist bdist_wheel
