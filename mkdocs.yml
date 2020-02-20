@@ -1,0 +1,14 @@
+site_name: quartustcl
+theme: readthedocs
+nav:
+  - index.md
+  - reference.md
+
+extra_css:
+  - css/custom.css
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - smarty
+  - mkautodoc

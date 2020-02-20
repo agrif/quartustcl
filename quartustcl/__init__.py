@@ -5,7 +5,42 @@ import time
 import tkinter
 
 class QuartusTcl:
-    """A class for managing a Quartus Tcl interpreter as a subprocess."""
+    """A class for managing a Quartus Tcl interpreter as a subprocess.
+
+    #### Arguments
+
+    * **args** - the Quartus TCL subshell to launch, in a format
+      suitable for `subprocess.Popen`. This defaults to launching
+      `quartus_stp`.
+
+    * **debug** - if True, write input and output of the subshell to
+      stderr.
+
+    #### Usage
+
+    Communication with the subshell is done via methods. Some simple
+    methods are provided, but methods not documented here are turned
+    directly into TCL commands. For example:
+
+    ```python
+    quartus.get_device_names(hardware_name="Foo Bar")
+    ```
+
+    will result in running
+
+    ```tcl
+    get_device_names -hardware_name {Foo Bar}
+    ```
+
+    All methods (except `interact`) will automatically parse their
+    result as a TCL list into a Python list. If the TCL result is a
+    single value, this means you will get a Python list with one
+    element.
+
+    Nested lists are not parsed, only the top level. If you need to
+    parse the components of a nested list, use the `parse` method.
+
+    """
     def __init__(self, args=['quartus_stp', '-s'], debug=False):
         self.debug = debug
 
@@ -21,7 +56,12 @@ class QuartusTcl:
         self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     def interact(self, line):
-        """Write one line to the Tcl interpreter, and read one line out."""
+        """Write one line to the Tcl interpreter, and read the result
+        out. This method bypasses the automatic list parsing, so the
+        result will always be a string. If the line raises an error,
+        that TCL error will be raised in Python as a `RuntimeError`.
+
+        """
         # write a single line to our subprocess
         # wrap it in puts to guarantee at least one newline is output
         unique = str(hash(time.time()))
@@ -66,7 +106,11 @@ class QuartusTcl:
         return accum
 
     def parse(self, data):
-        """Parse a Tcl-formatted list into a Python list."""
+        """Parse a Tcl-formatted list into a Python list. This only works on
+        the top-level of a list -- if you need to parse nested lists,
+        you will need to call this multiple times.
+
+        """
         data = data.strip()
         # first, make sure the list is canonically formatted
         try:
@@ -85,20 +129,28 @@ class QuartusTcl:
         return parsed
 
     def run(self, cmd, *args):
-        """Run a Tcl command, and parse and return the resulting list.
+        """Run a Tcl command, and parse and return the resulting list. If an
+        error is raised, it is re-raised in Python as a
+        `RuntimeError`.
 
-        `cmd` can be a format string, which will be filled out with the
+        **cmd** can be a format string, which will be filled out with the
         remaining arguments. If used this way, the remaining arguments are
         quoted in Tcl using {...}. For example:
-        
-            quartus.run("get_device_names -hardware_name {}", "Foo Bar")
+
+        ```python
+        quartus.run("get_device_names -hardware_name {}", "Foo Bar")
+        ```
 
         will result in running
 
-            get_device_names -hardware_name {Foo Bar}
+        ```tcl
+        get_device_names -hardware_name {Foo Bar}
+        ```
 
-        in the Tcl interpreter subprocess. If you do not want this automatic
-        quoting, you can use the usual format() method on strings.
+        in the Tcl interpreter subprocess. If you do not want this
+        automatic quoting, you can use the usual format() method on
+        strings.
+
         """
         # construct the full command by formatting-in our later arguments
         # but -- quote them in braces first!
@@ -108,15 +160,22 @@ class QuartusTcl:
         return self.parse(self.interact(cmd))
 
     def run_args(self, cmd, *args, **kwargs):
-        """Run a Tcl command with the given arguments and optional arguments.
+        """Run a Tcl command with the given arguments and optional arguments,
+        then parse and return the resulting list. If an error is
+        raised, it is re-raised in Python as a `RuntimeError`.
         
-        `cmd` is a bare Tcl command. For example:
+        **cmd** is a bare Tcl command. For example:
 
-            quartus.run_args('get_device_names', hardware_name="Foo Bar")
+        ```python
+        quartus.run_args('get_device_names', hardware_name="Foo Bar")
+        ```
 
         will result in running
 
-            get_device_names -hardware_name {Foo Bar}
+        ```tcl
+        get_device_names -hardware_name {Foo Bar}
+        ```
+
         """
         args = [cmd] + ['{' + str(a) + '}' for a in args]
         for k, v in kwargs.items():
@@ -125,13 +184,4 @@ class QuartusTcl:
         return self.run(' '.join(args))
 
     def __getattr__(self, attr):
-        """A bit of magic: turn unknown method calls on this object into calls
-        to run_args. For example:
-
-            quartus.get_device_names(hardware_name="Foo Bar")
-
-        will result in running
-
-            get_device_names -hardware_name {Foo Bar}
-        """
         return functools.partial(self.run_args, attr)

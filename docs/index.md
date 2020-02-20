@@ -1,11 +1,4 @@
-quartustcl
-----------
-
-[![PyPI](https://img.shields.io/pypi/v/quartustcl)](https://pypi.org/project/quartustcl/)
-[![Travis CI](https://img.shields.io/travis/com/agrif/quartustcl/master)](https://travis-ci.com/agrif/quartustcl)
-[![Read the Docs](https://img.shields.io/readthedocs/quartustcl/latest)][docs]
-
- [docs]: https://quartustcl.readthedocs.io/en/latest/
+# Introduction
 
 `quartustcl` is a Python module to interact with Intel Quartus TCL
 shells. It opens a single shell in a subprocess, then helps you with
@@ -44,4 +37,19 @@ get_device_names -hardware_name {Foo Bar}
 ```
 and parses the result into a Python list.
 
-For more detailed information, please [read the documentation][docs].
+Since *quartustcl* assumes all results will be lists, you will instead
+receive a list of one item if the result is a single value. This
+decision to automatically parse results as lists was a usability
+trade-off.
+
+Note that only top-level lists are automatically parsed. If your
+result contains nested lists, you will need to parse them manually
+with the `parse` method:
+
+```python
+for element in quartus.parse(data_from_tcl):
+    ...
+```
+
+For more information, including more ways to interact with the TCL
+subprocess, see [the reference documentation](reference).
