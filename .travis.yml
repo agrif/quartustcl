@@ -1,14 +1,26 @@
 language: python
-python:
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - "3.8"
-before_install:
-  # our tests use tclsh, not quartus itself, for portability
+cache: pip
+before_script:
+  - pip install --upgrade tox setuptools virtualenv
+  # we use tclsh in tests
   - sudo apt-get -y install tcl
-install:
-  - pip install .
-script:
-  - python -m tests
-  - python setup.py sdist bdist_wheel
+
+script: tox
+
+matrix:
+  include:
+    - python: "3.5"
+      env: TOXENV=py35
+    - python: "3.6"
+      env: TOXENV=py36
+    - python: "3.7"
+      env: TOXENV=py37
+    - python: "3.8"
+      env: TOXENV=py38
+
+    - python: "3.7"
+      env: TOXENV=lint
+    - python: "3.7"
+      env: TOXENV=docs
+    - python: "3.7"
+      env: TOXENV=build
