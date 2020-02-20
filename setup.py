@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from setuptools import setup, find_packages
+from os import path
+
+from setuptools import find_packages, setup
 
 # read our README
-from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
@@ -28,7 +29,10 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
+
+        'Topic :: Scientific/Engineering ::'
+        'Electronic Design Automation (EDA)',
+
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
     ],

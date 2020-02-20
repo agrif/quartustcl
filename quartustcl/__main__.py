@@ -3,9 +3,12 @@ import code
 
 import quartustcl
 
-parser = argparse.ArgumentParser(description='Spawn an interactive python shell on top of a Tcl shell.')
-parser.add_argument('-d', '--debug', action='store_true', help='display input and output to Tcl shell')
-parser.add_argument('subprocess', nargs='*', help='the Tcl shell to use')
+parser = argparse.ArgumentParser(
+    description='Spawn an interactive python shell on top of a Tcl shell.')
+parser.add_argument('-d', '--debug', action='store_true',
+                    help='display input and output to Tcl shell')
+parser.add_argument('subprocess', nargs='*',
+                    help='the Tcl shell to use')
 
 args = parser.parse_args()
 kwargs = {

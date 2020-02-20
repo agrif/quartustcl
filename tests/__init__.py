@@ -2,12 +2,16 @@ import unittest
 
 import quartustcl
 
+
 quartus = None
+
+
 def make_tcl():
     global quartus
     if quartus is None:
         quartus = quartustcl.QuartusTcl(args=['tclsh'])
     return quartus
+
 
 class TestParse(unittest.TestCase):
     def test_parse(self):
@@ -17,6 +21,7 @@ class TestParse(unittest.TestCase):
     def test_parse_quotes(self):
         data = make_tcl().parse('"hello world" 2 3')
         self.assertEqual(data, ['hello world', '2', '3'])
+
 
 class TestEval(unittest.TestCase):
     def test_interact(self):

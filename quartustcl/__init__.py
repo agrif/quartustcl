@@ -4,6 +4,7 @@ import sys
 import time
 import tkinter
 
+
 class QuartusTcl:
     """A class for managing a Quartus Tcl interpreter as a subprocess.
 
@@ -53,7 +54,10 @@ class QuartusTcl:
 
         # we launch a single instance of the quartus tcl shell, and then
         # talk to it line by line
-        self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.process = subprocess.Popen(args,
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.DEVNULL)
 
     def interact(self, line):
         """Write one line to the Tcl interpreter, and read the result
@@ -91,7 +95,8 @@ class QuartusTcl:
         after_prompt = False
         while True:
             outline = self.process.stdout.readline().decode()
-            if not after_prompt and outline.strip().endswith(parts['sentinel_start']):
+            if not after_prompt and outline.strip() \
+                                           .endswith(parts['sentinel_start']):
                 after_prompt = True
             elif after_prompt and outline.startswith(parts['sentinel_end']):
                 _, err, msg = outline.split(' ', 2)
@@ -163,7 +168,7 @@ class QuartusTcl:
         """Run a Tcl command with the given arguments and optional arguments,
         then parse and return the resulting list. If an error is
         raised, it is re-raised in Python as a `RuntimeError`.
-        
+
         **cmd** is a bare Tcl command. For example:
 
         ```python
