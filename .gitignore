@@ -1,0 +1,6 @@
+__pycache__
+
+/.eggs
+/build
+/dist
+/quartustcl.egg-info
