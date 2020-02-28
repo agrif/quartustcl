@@ -44,7 +44,9 @@ class TclParseError(Exception):
     parse something as a list that is not actually a list.
 
     """
-    pass
+
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class QuartusTcl:
