@@ -22,7 +22,7 @@ if args.subprocess:
 quartus = quartustcl.QuartusTcl(**kwargs)
 
 if args.command:
-    print(eval(args.command))
+    print(repr(eval(args.command)))
 else:
     banner = 'the local variable `quartus` is a running QuartusTcl session'
     code.interact(local=locals(), banner=banner)
