@@ -35,15 +35,15 @@ class TestEval(unittest.TestCase):
 
     def test_run(self):
         data = make_tcl().run('expr {} + {}', 1, 2)
-        self.assertEqual(data, ['3'])
+        self.assertEqual(data, '3')
 
     def test_run_args(self):
         data = make_tcl().run_args('expr', 1, '+', 2)
-        self.assertEqual(data, ['3'])
+        self.assertEqual(data, '3')
 
     def test_getattr(self):
         data = make_tcl().expr(1, '+', 2)
-        self.assertEqual(data, ['3'])
+        self.assertEqual(data, '3')
 
     def test_error(self):
         def div_zero():
@@ -59,10 +59,12 @@ class TestEval(unittest.TestCase):
 class TestQuote(unittest.TestCase):
     def test_quote_run(self):
         original = ['x', r'ugly \{} $var [hello]', '$just [vars]']
-        data = make_tcl().run('list {} {} {}', *original)
+        q = make_tcl()
+        data = q.parse(q.run('list {} {} {}', *original))
         self.assertEqual(data, original)
 
     def test_quote_args(self):
         original = ['x', r'ugly \{} $var [hello]', '$just [vars]']
-        data = make_tcl().run_args('list', *original)
+        q = make_tcl()
+        data = q.parse(q.run_args('list', *original))
         self.assertEqual(data, original)

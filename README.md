@@ -31,11 +31,19 @@ The *quartustcl* subshell is exposed in a variable named `quartus`.
 ## Basic Use
 
 Instantiate a `QuartusTcl` object to start a shell. Then, call methods
-on it to get automatically-parsed TCL lists:
+on it.
 
 ```python
 quartus = quartustcl.QuartusTcl()
-devnames = quartus.get_device_names(hardware_name="Foo Bar")
+three = quartus.expr('1 + 2')
+assert three == '3'
+```
+
+If you are expecting a list as a result, use `parse` to turn Tcl lists
+into Python lists.
+
+```python
+devnames = quartus.parse(quartus.get_device_names(hardware_name="Foo Bar"))
 ```
 
 In the TCL subshell, this runs

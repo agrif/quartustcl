@@ -77,13 +77,9 @@ class QuartusTcl:
     get_device_names -hardware_name {Foo Bar}
     ```
 
-    All methods (except `interact`) will automatically parse their
-    result as a TCL list into a Python list. If the TCL result is a
-    single value, this means you will get a Python list with one
-    element.
-
-    Nested lists are not parsed, only the top level. If you need to
-    parse the components of a nested list, use the `parse` method.
+    All methods will return their result as a string. If the Tcl
+    result is a list, you will need to use `parse` to turn it into a
+    Python list.
 
     """
     def __init__(self, args=['quartus_stp', '-s'], debug=False):
@@ -224,9 +220,8 @@ class QuartusTcl:
             return '{{{}}}'.format(data)
 
     def run(self, cmd, *args):
-        """Run a Tcl command, and parse and return the resulting list. If an
-        error is raised, it is re-raised in Python as a
-        `TclError`.
+        """Run a Tcl command, and return the resulting string. If an error is
+        raised, it is re-raised in Python as a `TclError`.
 
         **cmd** can be a format string, which will be filled out with the
         remaining arguments. If used this way, the remaining arguments are
@@ -252,12 +247,12 @@ class QuartusTcl:
         if args:
             cmd = cmd.format(*[self.quote(str(a)) for a in args])
 
-        return self.parse(self.interact(cmd))
+        return self.interact(cmd)
 
     def run_args(self, cmd, *args, **kwargs):
         """Run a Tcl command with the given arguments and optional arguments,
-        then parse and return the resulting list. If an error is
-        raised, it is re-raised in Python as a `TclError`.
+        then return the resulting string. If an error is raised, it is
+        re-raised in Python as a `TclError`.
 
         **cmd** is a bare Tcl command. For example:
 

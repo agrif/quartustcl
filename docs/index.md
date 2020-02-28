@@ -24,11 +24,19 @@ The *quartustcl* subshell is exposed in a variable named `quartus`.
 ## Basic Use
 
 Instantiate a `QuartusTcl` object to start a shell. Then, call methods
-on it to get automatically-parsed TCL lists:
+on it.
 
 ```python
 quartus = quartustcl.QuartusTcl()
-devnames = quartus.get_device_names(hardware_name="Foo Bar")
+three = quartus.expr('1 + 2')
+assert three == '3'
+```
+
+If you are expecting a list as a result, use `parse` to turn Tcl lists
+into Python lists.
+
+```python
+devnames = quartus.parse(quartus.get_device_names(hardware_name="Foo Bar"))
 ```
 
 In the TCL subshell, this runs
@@ -36,20 +44,6 @@ In the TCL subshell, this runs
 get_device_names -hardware_name {Foo Bar}
 ```
 and parses the result into a Python list.
-
-Since *quartustcl* assumes all results will be lists, you will instead
-receive a list of one item if the result is a single value. This
-decision to automatically parse results as lists was a usability
-trade-off.
-
-Note that only top-level lists are automatically parsed. If your
-result contains nested lists, you will need to parse them manually
-with the `parse` method:
-
-```python
-for element in quartus.parse(data_from_tcl):
-    ...
-```
 
 For more information, including more ways to interact with the TCL
 subprocess, see [the reference documentation](reference).
