@@ -7,6 +7,8 @@ parser = argparse.ArgumentParser(
     description='Spawn an interactive python shell on top of a Tcl shell.')
 parser.add_argument('-d', '--debug', action='store_true',
                     help='display input and output to Tcl shell')
+parser.add_argument('-c', '--command', type=str,
+                    help='run a command, then exit')
 parser.add_argument('subprocess', nargs='*',
                     help='the Tcl shell to use')
 
@@ -18,5 +20,9 @@ if args.subprocess:
     kwargs['args'] = args.subprocess
 
 quartus = quartustcl.QuartusTcl(**kwargs)
-banner = 'the local variable `quartus` is a running QuartusTcl session'
-code.interact(local=locals(), banner=banner)
+
+if args.command:
+    print(eval(args.command))
+else:
+    banner = 'the local variable `quartus` is a running QuartusTcl session'
+    code.interact(local=locals(), banner=banner)
