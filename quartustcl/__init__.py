@@ -7,7 +7,7 @@ import tkinter
 
 class TclError(Exception):
     """This error is raised whenever the Tcl subprocess encounters an
-    error. It exposes two attributes:
+    error. It exposes four attributes:
 
     * **message** - the cause of the error, as a human-friendly string
 
@@ -15,11 +15,11 @@ class TclError(Exception):
       integer
 
     * **error_code** - the cause of the error, as a machine-friendly
-      list. This is parsed directly from $errorCode inside Tcl.
+      list. This is parsed directly from `$errorCode` inside Tcl.
 
     * **error_info** - the cause of the error, as a longer
-      human-friendly string.  This is parsed directly from $errorInfo
-      inside Tcl.
+      human-friendly string.  This is parsed directly from
+      `$errorInfo` inside Tcl.
 
     """
     def __init__(self, message, return_code, error_code, error_info):
