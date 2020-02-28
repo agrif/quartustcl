@@ -6,6 +6,12 @@ import tkinter
 
 
 class TclError(Exception):
+    """Base class for errors raised in this module."""
+    def __init__(self, *args):
+        super().__init__(*args)
+
+
+class TclEvalError(TclError):
     """This error is raised whenever the Tcl subprocess encounters an
     error. It exposes four attributes:
 
@@ -39,7 +45,7 @@ class TclError(Exception):
         )
 
 
-class TclParseError(Exception):
+class TclParseError(TclError):
     """This error is raised by `QuartusTcl.parse` when Python attempts to
     parse something as a list that is not actually a list.
 
@@ -47,6 +53,7 @@ class TclParseError(Exception):
 
     def __init__(self, value):
         super().__init__(value)
+        self.value = value
 
 
 class QuartusTcl:
@@ -104,7 +111,7 @@ class QuartusTcl:
     def eval(self, script, *args):
         """Write a script to the Tcl interpreter, and read the result out as a
         string. If the script raises an error, that Tcl error will be
-        raised in Python as a `TclError`.
+        raised in Python as a `TclEvalError`.
 
         **script** can be a format string, which will be filled out with the
         remaining arguments. If used this way, the remaining arguments are
@@ -190,7 +197,7 @@ class QuartusTcl:
         retcode = int(retcode)
         if retcode > 0:
             message, code, info = data
-            raise TclError(message, retcode, self.parse(code), info)
+            raise TclEvalError(message, retcode, self.parse(code), info)
         else:
             # stdout is in accum
             return data[0]
@@ -246,7 +253,7 @@ class QuartusTcl:
     def call(self, cmd, *args, **kwargs):
         """Run a Tcl command with the given arguments and optional arguments,
         then return the resulting string. If an error is raised, it is
-        re-raised in Python as a `TclError`.
+        re-raised in Python as a `TclEvalError`.
 
         **cmd** is a bare Tcl command. For example:
 

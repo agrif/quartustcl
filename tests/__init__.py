@@ -49,11 +49,11 @@ class TestEval(unittest.TestCase):
         self.assertEqual(data, '3')
 
     def test_error(self):
-        with self.assertRaises(quartustcl.TclError):
+        with self.assertRaises(quartustcl.TclEvalError):
             make_tcl().expr(1, '/', 0)
 
     def test_interact_error(self):
-        with self.assertRaises(quartustcl.TclError):
+        with self.assertRaises(quartustcl.TclEvalError):
             make_tcl().eval('expr 1 + 2 {')
 
 
