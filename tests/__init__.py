@@ -22,6 +22,11 @@ class TestParse(unittest.TestCase):
         data = make_tcl().parse('"hello world" 2 3')
         self.assertEqual(data, ['hello world', '2', '3'])
 
+    def test_parse_fail(self):
+        def fail():
+            print(make_tcl().parse('broken {'))
+        self.assertRaises(quartustcl.TclParseError, fail)
+
 
 class TestEval(unittest.TestCase):
     def test_interact(self):
@@ -39,3 +44,8 @@ class TestEval(unittest.TestCase):
     def test_getattr(self):
         data = make_tcl().expr(1, '+', 2)
         self.assertEqual(data, ['3'])
+
+    def test_error(self):
+        def div_zero():
+            make_tcl().expr(1, '/', 0)
+        self.assertRaises(quartustcl.TclError, div_zero)

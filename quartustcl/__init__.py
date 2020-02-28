@@ -5,6 +5,48 @@ import time
 import tkinter
 
 
+class TclError(Exception):
+    """This error is raised whenever the Tcl subprocess encounters an
+    error. It exposes two attributes:
+
+    * **message** - the cause of the error, as a human-friendly string
+
+    * **return_code** - the Tcl return code of the command, as an
+      integer
+
+    * **error_code** - the cause of the error, as a machine-friendly
+      list. This is parsed directly from $errorCode inside Tcl.
+
+    * **error_info** - the cause of the error, as a longer
+      human-friendly string.  This is parsed directly from $errorInfo
+      inside Tcl.
+
+    """
+    def __init__(self, message, return_code, error_code, error_info):
+        super().__init__(message)
+        self.message = message
+        self.return_code = return_code
+        self.error_code = error_code
+        self.error_info = error_info
+
+    def __repr__(self):
+        return '{}({!r}, {!r}, {!r}, {!r})'.format(
+            self.__class__.__name__,
+            self.message,
+            self.return_code,
+            self.error_code,
+            self.error_info,
+        )
+
+
+class TclParseError(Exception):
+    """This error is raised by `QuartusTcl.parse` when Python attempts to
+    parse something as a list that is not actually a list.
+
+    """
+    pass
+
+
 class QuartusTcl:
     """A class for managing a Quartus Tcl interpreter as a subprocess.
 
@@ -45,8 +87,10 @@ class QuartusTcl:
     def __init__(self, args=['quartus_stp', '-s'], debug=False):
         self.debug = debug
 
-        # we need to use some special variables to store and detect errors
-        self.errvar = '_python_err_val'
+        # we need to use some special variables to use with catch
+        # and detect output phases
+        self.var = '_python_val'
+        self.retcode = '_python_ret_code'
         self.sentinel = '_PYTHON_SENTINEL'
 
         # we use python's built-in Tcl interpreter to help us parse Tcl lists
@@ -63,7 +107,7 @@ class QuartusTcl:
         """Write one line to the Tcl interpreter, and read the result
         out. This method bypasses the automatic list parsing, so the
         result will always be a string. If the line raises an error,
-        that TCL error will be raised in Python as a `RuntimeError`.
+        that TCL error will be raised in Python as a `TclError`.
 
         """
         # write a single line to our subprocess
@@ -71,18 +115,21 @@ class QuartusTcl:
         unique = str(hash(time.time()))
         parts = dict(
             expr=line,
-            errvar=self.errvar,
+            var=self.var,
+            retcode=self.retcode,
             sentinel_start=self.sentinel + '_' + unique + '_START',
+            sentinel_middle=self.sentinel + '_' + unique + '_MIDDLE',
             sentinel_end=self.sentinel + '_' + unique + '_END',
         )
         cmd = ' '.join("""
         puts "{sentinel_start}";
-        if {{[catch {{puts [{expr}]}} {errvar}]}} {{
-            puts -nonewline "{sentinel_end} 1 ";
-            puts ${errvar};
+        if {{[set {retcode} [catch {{{expr}}} {var}]]}} {{
+            puts [list "{sentinel_middle}" ${retcode} ${var}
+                  $errorCode $errorInfo];
         }} else {{
-            puts "{sentinel_end} 0 success";
-        }}
+            puts [list "{sentinel_middle}" ${retcode} ${var}];
+        }};
+        puts {sentinel_end};
         """.format(**parts).split())
         if self.debug:
             print('(tcl) <<<', line, file=sys.stderr)
@@ -92,28 +139,40 @@ class QuartusTcl:
         # read the output, which will be introduced with sentinel_start
         # and ended by sentinel_end
         accum = ""
-        after_prompt = False
+        accum_end = ""
+        state = 0
         while True:
             outline = self.process.stdout.readline().decode()
-            if not after_prompt and outline.strip() \
-                                           .endswith(parts['sentinel_start']):
-                after_prompt = True
-            elif after_prompt and outline.startswith(parts['sentinel_end']):
-                _, err, msg = outline.split(' ', 2)
-                if int(err) > 0:
-                    raise RuntimeError(msg)
-                break
-            elif after_prompt:
+            if state == 0 and outline.strip() \
+                                     .endswith(parts['sentinel_start']):
+                state = 1
+            elif state == 1 and outline.startswith(parts['sentinel_middle']):
+                accum_end += outline
+                state = 2
+            elif state == 1:
                 if self.debug and outline:
                     print('(tcl) >>>', outline.rstrip(), file=sys.stderr)
                 accum += outline
-        accum = accum.strip()
-        return accum
+            elif state == 2 and outline.startswith(parts['sentinel_end']):
+                break
+            elif state == 2:
+                accum_end += outline
+
+        _, retcode, *data = self.parse(accum_end)
+        retcode = int(retcode)
+        if retcode > 0:
+            message, code, info = data
+            raise TclError(message, retcode, self.parse(code), info)
+        else:
+            # stdout is in accum
+            return data[0]
 
     def parse(self, data):
         """Parse a Tcl-formatted list into a Python list. This only works on
         the top-level of a list -- if you need to parse nested lists,
         you will need to call this multiple times.
+
+        If parsing fails, this will raise `TclParseError`.
 
         """
         data = data.strip()
@@ -121,7 +180,7 @@ class QuartusTcl:
         try:
             data = '{' + self.tcl.eval('list ' + data) + '}'
         except Exception:
-            raise RuntimeError('Tcl list could not be parsed: ' + repr(data))
+            raise TclParseError('Tcl list could not be parsed: ' + repr(data))
         # what is the length of the list?
         length = int(self.tcl.eval('llength {}'.format(data)))
 
@@ -136,7 +195,7 @@ class QuartusTcl:
     def run(self, cmd, *args):
         """Run a Tcl command, and parse and return the resulting list. If an
         error is raised, it is re-raised in Python as a
-        `RuntimeError`.
+        `TclError`.
 
         **cmd** can be a format string, which will be filled out with the
         remaining arguments. If used this way, the remaining arguments are
@@ -167,7 +226,7 @@ class QuartusTcl:
     def run_args(self, cmd, *args, **kwargs):
         """Run a Tcl command with the given arguments and optional arguments,
         then parse and return the resulting list. If an error is
-        raised, it is re-raised in Python as a `RuntimeError`.
+        raised, it is re-raised in Python as a `TclError`.
 
         **cmd** is a bare Tcl command. For example:
 
