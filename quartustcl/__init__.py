@@ -45,8 +45,8 @@ class TclParseError(Exception):
 
     """
 
-    def __init__(self, message):
-        super().__init__(message)
+    def __init__(self, value):
+        super().__init__(value)
 
 
 class QuartusTcl:
@@ -184,20 +184,13 @@ class QuartusTcl:
         if levels <= 0:
             return data
 
-        data = data.strip()
-        # first, make sure the list is canonically formatted
-        try:
-            data = '{' + self.tcl.eval('list ' + data) + '}'
-        except Exception:
-            raise TclParseError('Tcl list could not be parsed: ' + repr(data))
-        # what is the length of the list?
-        length = int(self.tcl.eval('llength {}'.format(data)))
-
-        # iterate through each item, and add it to our python list
         parsed = []
-        for i in range(length):
-            # get the i'th element...
-            part = self.tcl.eval('lindex {} {}'.format(data, i))
+        try:
+            parts = self.tcl.call('lrange', data, 0, 'end')
+        except Exception:
+            raise TclParseError(data) from None
+
+        for part in parts:
             if levels > 1:
                 part = self.parse(part, levels=levels - 1)
             parsed.append(part)
