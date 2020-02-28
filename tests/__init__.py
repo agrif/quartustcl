@@ -49,3 +49,20 @@ class TestEval(unittest.TestCase):
         def div_zero():
             make_tcl().expr(1, '/', 0)
         self.assertRaises(quartustcl.TclError, div_zero)
+
+    def test_interact_error(self):
+        def unbalanced_braces():
+            make_tcl().interact('expr 1 + 2 {')
+        self.assertRaises(quartustcl.TclError, unbalanced_braces)
+
+
+class TestQuote(unittest.TestCase):
+    def test_quote_run(self):
+        original = ['x', r'ugly \{} $var [hello]', '$just [vars]']
+        data = make_tcl().run('list {} {} {}', *original)
+        self.assertEqual(data, original)
+
+    def test_quote_args(self):
+        original = ['x', r'ugly \{} $var [hello]', '$just [vars]']
+        data = make_tcl().run_args('list', *original)
+        self.assertEqual(data, original)

@@ -116,7 +116,7 @@ class QuartusTcl:
         # wrap it in puts to guarantee at least one newline is output
         unique = str(hash(time.time()))
         parts = dict(
-            expr=line,
+            expr=self.quote(line),
             var=self.var,
             retcode=self.retcode,
             sentinel_start=self.sentinel + '_' + unique + '_START',
@@ -125,13 +125,13 @@ class QuartusTcl:
         )
         cmd = ' '.join("""
         puts "{sentinel_start}";
-        if {{[set {retcode} [catch {{{expr}}} {var}]]}} {{
+        if {{[set {retcode} [catch {expr} {var}]]}} {{
             puts [list "{sentinel_middle}" ${retcode} ${var}
                   $errorCode $errorInfo];
         }} else {{
             puts [list "{sentinel_middle}" ${retcode} ${var}];
         }};
-        puts {sentinel_end};
+        puts "{sentinel_end}";
         """.format(**parts).split())
         if self.debug:
             print('(tcl) <<<', line, file=sys.stderr)
@@ -142,6 +142,7 @@ class QuartusTcl:
         # and ended by sentinel_end
         accum = ""
         accum_end = ""
+        error = 0
         state = 0
         while True:
             outline = self.process.stdout.readline().decode()
@@ -150,7 +151,11 @@ class QuartusTcl:
                 state = 1
             elif state == 1 and outline.startswith(parts['sentinel_middle']):
                 accum_end += outline
+                _, error, extra = outline.split(' ', 2)
+                error = int(error)
                 state = 2
+                if self.debug and extra and not error:
+                    print('(tcl) >>>', extra.rstrip(), file=sys.stderr)
             elif state == 1:
                 if self.debug and outline:
                     print('(tcl) >>>', outline.rstrip(), file=sys.stderr)
@@ -158,6 +163,8 @@ class QuartusTcl:
             elif state == 2 and outline.startswith(parts['sentinel_end']):
                 break
             elif state == 2:
+                if self.debug and outline and not error:
+                    print('(tcl) >>>', outline.rstrip(), file=sys.stderr)
                 accum_end += outline
 
         _, retcode, *data = self.parse(accum_end)
@@ -194,6 +201,28 @@ class QuartusTcl:
             parsed.append(part)
         return parsed
 
+    def quote(self, data):
+        """Wrap a string in the Tcl necessary for it to evaluate to the
+        original string. For example:
+
+        ```python
+        quartus.run("puts " + quartus.quote("$var [{]"))
+        ```
+
+        will result in printing the string "$var [{]" to standard
+        out. This is required to work around reserved syntax in the
+        Tcl language.
+
+        """
+        # https://stackoverflow.com/a/5302213
+        if any(c in data for c in '{}'):
+            escaped = data.replace('\\', '\\\\') \
+                          .replace('{', '\\{')   \
+                          .replace('}', '\\}')
+            return '[subst -nocommands -novariables {{{}}}]'.format(escaped)
+        else:
+            return '{{{}}}'.format(data)
+
     def run(self, cmd, *args):
         """Run a Tcl command, and parse and return the resulting list. If an
         error is raised, it is re-raised in Python as a
@@ -201,13 +230,13 @@ class QuartusTcl:
 
         **cmd** can be a format string, which will be filled out with the
         remaining arguments. If used this way, the remaining arguments are
-        quoted in Tcl using {...}. For example:
+        quoted using `quote`. For example:
 
         ```python
         quartus.run("get_device_names -hardware_name {}", "Foo Bar")
         ```
 
-        will result in running
+        is equivalent to running
 
         ```tcl
         get_device_names -hardware_name {Foo Bar}
@@ -219,9 +248,9 @@ class QuartusTcl:
 
         """
         # construct the full command by formatting-in our later arguments
-        # but -- quote them in braces first!
+        # but -- quote them first!
         if args:
-            cmd = cmd.format(*['{' + str(a) + '}' for a in args])
+            cmd = cmd.format(*[self.quote(str(a)) for a in args])
 
         return self.parse(self.interact(cmd))
 
@@ -236,17 +265,17 @@ class QuartusTcl:
         quartus.run_args('get_device_names', hardware_name="Foo Bar")
         ```
 
-        will result in running
+        is equivalent to running
 
         ```tcl
         get_device_names -hardware_name {Foo Bar}
         ```
 
         """
-        args = [cmd] + ['{' + str(a) + '}' for a in args]
+        args = [cmd] + [self.quote(str(a)) for a in args]
         for k, v in kwargs.items():
             args.append('-' + k)
-            args.append('{' + str(v) + '}')
+            args.append(self.quote(str(v)))
         return self.run(' '.join(args))
 
     def __getattr__(self, attr):
