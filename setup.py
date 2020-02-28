@@ -30,7 +30,7 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries :: Python Modules',
 
-        'Topic :: Scientific/Engineering ::'
+        'Topic :: Scientific/Engineering :: '
         'Electronic Design Automation (EDA)',
 
         'License :: OSI Approved :: MIT License',
