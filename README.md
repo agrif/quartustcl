@@ -7,9 +7,9 @@ quartustcl
 
  [docs]: https://quartustcl.readthedocs.io/en/latest/
 
-`quartustcl` is a Python module to interact with Intel Quartus TCL
+`quartustcl` is a Python module to interact with Intel Quartus Tcl
 shells. It opens a single shell in a subprocess, then helps you with
-reading and writing data to it, and parsing TCL lists.
+reading and writing data to it, and parsing Tcl lists.
 
 ## Installation
 
@@ -46,7 +46,7 @@ into Python lists.
 devnames = quartus.parse(quartus.get_device_names(hardware_name="Foo Bar"))
 ```
 
-In the TCL subshell, this runs
+In the Tcl subshell, this runs
 ```tcl
 get_device_names -hardware_name {Foo Bar}
 ```

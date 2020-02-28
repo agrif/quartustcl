@@ -54,7 +54,7 @@ class QuartusTcl:
 
     #### Arguments
 
-    * **args** - the Quartus TCL subshell to launch, in a format
+    * **args** - the Quartus Tcl subshell to launch, in a format
       suitable for `subprocess.Popen`. This defaults to launching
       `quartus_stp`.
 
@@ -65,7 +65,7 @@ class QuartusTcl:
 
     Communication with the subshell is done via methods. Some simple
     methods are provided, but methods not documented here are turned
-    directly into TCL commands. For example:
+    directly into Tcl commands. For example:
 
     ```python
     quartus.get_device_names(hardware_name="Foo Bar")
@@ -103,7 +103,7 @@ class QuartusTcl:
 
     def eval(self, script, *args):
         """Write a script to the Tcl interpreter, and read the result out as a
-        string. If the line raises an error, that Tcl error will be
+        string. If the script raises an error, that Tcl error will be
         raised in Python as a `TclError`.
 
         **script** can be a format string, which will be filled out with the
@@ -132,7 +132,7 @@ class QuartusTcl:
                 *[self.quote(str(a)) for a in args]))
 
         # write a single line to our subprocess
-        # wrap it in puts to guarantee at least one newline is output
+        # wrap it in some code to detect and report errors and results
         unique = str(hash(time.time()))
         parts = dict(
             expr=self.quote(script),
