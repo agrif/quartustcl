@@ -45,5 +45,10 @@ get_device_names -hardware_name {Foo Bar}
 ```
 and parses the result into a Python list.
 
+## Further Reading
+
 For more information, including more ways to interact with the Tcl
 subprocess, see [the reference documentation](reference).
+
+For a more involved example, see [the in-system memory editing
+guide](example-memory).

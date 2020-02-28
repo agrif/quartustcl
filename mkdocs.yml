@@ -2,6 +2,7 @@ site_name: quartustcl
 theme: readthedocs
 nav:
   - index.md
+  - example-memory.md
   - reference.md
 
 extra_css:
