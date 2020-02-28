@@ -24,8 +24,12 @@ class TestParse(unittest.TestCase):
 
     def test_parse_fail(self):
         def fail():
-            print(make_tcl().parse('broken {'))
+            make_tcl().parse('broken {')
         self.assertRaises(quartustcl.TclParseError, fail)
+
+    def test_parse_nested(self):
+        data = make_tcl().parse('{1 2} {3 4} {5 6}', levels=2)
+        self.assertEqual(data, [['1', '2'], ['3', '4'], ['5', '6']])
 
 
 class TestEval(unittest.TestCase):

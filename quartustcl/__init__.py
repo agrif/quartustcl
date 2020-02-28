@@ -102,10 +102,9 @@ class QuartusTcl:
                                         stderr=subprocess.DEVNULL)
 
     def interact(self, line):
-        """Write one line to the Tcl interpreter, and read the result
-        out. This method bypasses the automatic list parsing, so the
-        result will always be a string. If the line raises an error,
-        that TCL error will be raised in Python as a `TclError`.
+        """Write one line to the Tcl interpreter, and read the result out as a
+        string. If the line raises an error, that TCL error will be
+        raised in Python as a `TclError`.
 
         """
         # write a single line to our subprocess
@@ -172,14 +171,19 @@ class QuartusTcl:
             # stdout is in accum
             return data[0]
 
-    def parse(self, data):
-        """Parse a Tcl-formatted list into a Python list. This only works on
-        the top-level of a list -- if you need to parse nested lists,
-        you will need to call this multiple times.
+    def parse(self, data, levels=1):
+        """Parse a Tcl-formatted list into a Python list.
+
+        If **levels** is specified, this sets how many levels of the
+        list to convert. If you know you are dealing with nested lists
+        two levels deep, use `levels=2` to parse both in one call.
 
         If parsing fails, this will raise `TclParseError`.
 
         """
+        if levels <= 0:
+            return data
+
         data = data.strip()
         # first, make sure the list is canonically formatted
         try:
@@ -194,7 +198,10 @@ class QuartusTcl:
         for i in range(length):
             # get the i'th element...
             part = self.tcl.eval('lindex {} {}'.format(data, i))
+            if levels > 1:
+                part = self.parse(part, levels=levels - 1)
             parsed.append(part)
+
         return parsed
 
     def quote(self, data):
