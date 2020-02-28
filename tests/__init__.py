@@ -23,9 +23,8 @@ class TestParse(unittest.TestCase):
         self.assertEqual(data, ['hello world', '2', '3'])
 
     def test_parse_fail(self):
-        def fail():
+        with self.assertRaises(quartustcl.TclParseError):
             make_tcl().parse('broken {')
-        self.assertRaises(quartustcl.TclParseError, fail)
 
     def test_parse_nested(self):
         data = make_tcl().parse('{1 2} {3 4} {5 6}', levels=2)
@@ -50,14 +49,12 @@ class TestEval(unittest.TestCase):
         self.assertEqual(data, '3')
 
     def test_error(self):
-        def div_zero():
+        with self.assertRaises(quartustcl.TclError):
             make_tcl().expr(1, '/', 0)
-        self.assertRaises(quartustcl.TclError, div_zero)
 
     def test_interact_error(self):
-        def unbalanced_braces():
+        with self.assertRaises(quartustcl.TclError):
             make_tcl().eval('expr 1 + 2 {')
-        self.assertRaises(quartustcl.TclError, unbalanced_braces)
 
 
 class TestQuote(unittest.TestCase):
