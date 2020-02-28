@@ -101,17 +101,41 @@ class QuartusTcl:
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.DEVNULL)
 
-    def interact(self, line):
-        """Write one line to the Tcl interpreter, and read the result out as a
-        string. If the line raises an error, that TCL error will be
+    def eval(self, script, *args):
+        """Write a script to the Tcl interpreter, and read the result out as a
+        string. If the line raises an error, that Tcl error will be
         raised in Python as a `TclError`.
 
+        **script** can be a format string, which will be filled out with the
+        remaining arguments. If used this way, the remaining arguments are
+        quoted using `quote`. For example:
+
+        ```python
+        quartus.eval("get_device_names -hardware_name {}", "Foo Bar")
+        ```
+
+        is equivalent to running
+
+        ```tcl
+        get_device_names -hardware_name {Foo Bar}
+        ```
+
+        in the Tcl interpreter subprocess. If you do not want this
+        automatic quoting, you can use the usual format() method on
+        strings.
+
         """
+
+        # if we have any extra args, do the formatting and try again
+        if args:
+            return self.eval(script.format(
+                *[self.quote(str(a)) for a in args]))
+
         # write a single line to our subprocess
         # wrap it in puts to guarantee at least one newline is output
         unique = str(hash(time.time()))
         parts = dict(
-            expr=self.quote(line),
+            expr=self.quote(script),
             var=self.var,
             retcode=self.retcode,
             sentinel_start=self.sentinel + '_' + unique + '_START',
@@ -129,7 +153,7 @@ class QuartusTcl:
         puts "{sentinel_end}";
         """.format(**parts).split())
         if self.debug:
-            print('(tcl) <<<', line, file=sys.stderr)
+            print('(tcl) <<<', script, file=sys.stderr)
         self.process.stdin.write((cmd + '\n').encode())
         self.process.stdin.flush()
 
@@ -202,7 +226,7 @@ class QuartusTcl:
         original string. For example:
 
         ```python
-        quartus.run("puts " + quartus.quote("$var [{]"))
+        quartus.eval("puts " + quartus.quote("$var [{]"))
         ```
 
         will result in printing the string "$var [{]" to standard
@@ -219,37 +243,7 @@ class QuartusTcl:
         else:
             return '{{{}}}'.format(data)
 
-    def run(self, cmd, *args):
-        """Run a Tcl command, and return the resulting string. If an error is
-        raised, it is re-raised in Python as a `TclError`.
-
-        **cmd** can be a format string, which will be filled out with the
-        remaining arguments. If used this way, the remaining arguments are
-        quoted using `quote`. For example:
-
-        ```python
-        quartus.run("get_device_names -hardware_name {}", "Foo Bar")
-        ```
-
-        is equivalent to running
-
-        ```tcl
-        get_device_names -hardware_name {Foo Bar}
-        ```
-
-        in the Tcl interpreter subprocess. If you do not want this
-        automatic quoting, you can use the usual format() method on
-        strings.
-
-        """
-        # construct the full command by formatting-in our later arguments
-        # but -- quote them first!
-        if args:
-            cmd = cmd.format(*[self.quote(str(a)) for a in args])
-
-        return self.interact(cmd)
-
-    def run_args(self, cmd, *args, **kwargs):
+    def call(self, cmd, *args, **kwargs):
         """Run a Tcl command with the given arguments and optional arguments,
         then return the resulting string. If an error is raised, it is
         re-raised in Python as a `TclError`.
@@ -257,7 +251,7 @@ class QuartusTcl:
         **cmd** is a bare Tcl command. For example:
 
         ```python
-        quartus.run_args('get_device_names', hardware_name="Foo Bar")
+        quartus.call('get_device_names', hardware_name="Foo Bar")
         ```
 
         is equivalent to running
@@ -271,7 +265,7 @@ class QuartusTcl:
         for k, v in kwargs.items():
             args.append('-' + k)
             args.append(self.quote(str(v)))
-        return self.run(' '.join(args))
+        return self.eval(' '.join(args))
 
     def __getattr__(self, attr):
-        return functools.partial(self.run_args, attr)
+        return functools.partial(self.call, attr)

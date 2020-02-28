@@ -33,16 +33,16 @@ class TestParse(unittest.TestCase):
 
 
 class TestEval(unittest.TestCase):
-    def test_interact(self):
-        data = make_tcl().interact('expr 1 + 2')
+    def test_eval(self):
+        data = make_tcl().eval('expr 1 + 2')
         self.assertEqual(data, '3')
 
-    def test_run(self):
-        data = make_tcl().run('expr {} + {}', 1, 2)
+    def test_eval_args(self):
+        data = make_tcl().eval('expr {} + {}', 1, 2)
         self.assertEqual(data, '3')
 
-    def test_run_args(self):
-        data = make_tcl().run_args('expr', 1, '+', 2)
+    def test_call(self):
+        data = make_tcl().call('expr', 1, '+', 2)
         self.assertEqual(data, '3')
 
     def test_getattr(self):
@@ -56,19 +56,19 @@ class TestEval(unittest.TestCase):
 
     def test_interact_error(self):
         def unbalanced_braces():
-            make_tcl().interact('expr 1 + 2 {')
+            make_tcl().eval('expr 1 + 2 {')
         self.assertRaises(quartustcl.TclError, unbalanced_braces)
 
 
 class TestQuote(unittest.TestCase):
-    def test_quote_run(self):
+    def test_quote_eval(self):
         original = ['x', r'ugly \{} $var [hello]', '$just [vars]']
         q = make_tcl()
-        data = q.parse(q.run('list {} {} {}', *original))
+        data = q.parse(q.eval('list {} {} {}', *original))
         self.assertEqual(data, original)
 
-    def test_quote_args(self):
+    def test_quote_call(self):
         original = ['x', r'ugly \{} $var [hello]', '$just [vars]']
         q = make_tcl()
-        data = q.parse(q.run_args('list', *original))
+        data = q.parse(q.call('list', *original))
         self.assertEqual(data, original)
