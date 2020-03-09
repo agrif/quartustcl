@@ -42,7 +42,7 @@ setup(
         'better-setuptools-git-version >= 1.0',
     ],
     extras_require={
-        'docs': ['mkdocs >= 1.0', 'mkautodoc >= 0.1.0'],
+        'docs': ['mkdocs >= 1.0, < 1.1', 'mkautodoc >= 0.1.0'],
     },
     version_config={
         'version_format': '{tag}.dev{sha}',
