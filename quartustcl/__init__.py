@@ -104,23 +104,23 @@ class QuartusTcl:
 
     """
     def __init__(self, args=['quartus_stp', '-s'], debug=False):
-        self.debug = debug
+        self._debug = debug
 
         # we need to use some special variables to use with catch
         # and detect output phases
-        self.var = '_python_val'
-        self.retcode = '_python_ret_code'
-        self.sentinel = '_PYTHON_SENTINEL'
+        self._var = '_python_val'
+        self._retcode = '_python_ret_code'
+        self._sentinel = '_PYTHON_SENTINEL'
 
         # we use python's built-in Tcl interpreter to help us parse Tcl lists
-        self.tcl = tkinter.Tcl()
+        self._tcl = tkinter.Tcl()
 
         # we launch a single instance of the quartus tcl shell, and then
         # talk to it line by line
-        self.process = subprocess.Popen(args,
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.DEVNULL)
+        self._process = subprocess.Popen(args,
+                                         stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.DEVNULL)
 
     def eval(self, script, *args):
         """Write a script to the Tcl interpreter, and read the result out as a
@@ -157,11 +157,11 @@ class QuartusTcl:
         unique = str(hash(time.time()))
         parts = dict(
             expr=self.quote(script),
-            var=self.var,
-            retcode=self.retcode,
-            sentinel_start=self.sentinel + '_' + unique + '_START',
-            sentinel_middle=self.sentinel + '_' + unique + '_MIDDLE',
-            sentinel_end=self.sentinel + '_' + unique + '_END',
+            var=self._var,
+            retcode=self._retcode,
+            sentinel_start=self._sentinel + '_' + unique + '_START',
+            sentinel_middle=self._sentinel + '_' + unique + '_MIDDLE',
+            sentinel_end=self._sentinel + '_' + unique + '_END',
         )
         cmd = ' '.join("""
         puts "{sentinel_start}";
@@ -173,10 +173,10 @@ class QuartusTcl:
         }};
         puts "{sentinel_end}";
         """.format(**parts).split())
-        if self.debug:
+        if self._debug:
             print('(tcl) <<<', script, file=sys.stderr)
-        self.process.stdin.write((cmd + '\n').encode())
-        self.process.stdin.flush()
+        self._process.stdin.write((cmd + '\n').encode())
+        self._process.stdin.flush()
 
         # read the output, which will be introduced with sentinel_start
         # and ended by sentinel_end
@@ -185,7 +185,7 @@ class QuartusTcl:
         error = 0
         state = 0
         while True:
-            outline = self.process.stdout.readline().decode()
+            outline = self._process.stdout.readline().decode()
             if state == 0 and outline.strip() \
                                      .endswith(parts['sentinel_start']):
                 state = 1
@@ -194,16 +194,16 @@ class QuartusTcl:
                 _, error, extra = outline.split(' ', 2)
                 error = int(error)
                 state = 2
-                if self.debug and extra and not error:
+                if self._debug and extra and not error:
                     print('(tcl) >>>', extra.rstrip(), file=sys.stderr)
             elif state == 1:
-                if self.debug and outline:
+                if self._debug and outline:
                     print('(tcl) >>>', outline.rstrip(), file=sys.stderr)
                 accum += outline
             elif state == 2 and outline.startswith(parts['sentinel_end']):
                 break
             elif state == 2:
-                if self.debug and outline and not error:
+                if self._debug and outline and not error:
                     print('(tcl) >>>', outline.rstrip(), file=sys.stderr)
                 accum_end += outline
 
@@ -231,7 +231,7 @@ class QuartusTcl:
 
         parsed = []
         try:
-            parts = self.tcl.call('lrange', data, 0, 'end')
+            parts = self._tcl.call('lrange', data, 0, 'end')
         except Exception:
             raise TclParseError(data) from None
 
@@ -299,10 +299,10 @@ class QuartusTcl:
 
         """
 
-        self.process.stdin.close()
-        self.process.stdout.close()
-        self.process.terminate()
-        self.process.wait(timeout=timeout)
+        self._process.stdin.close()
+        self._process.stdout.close()
+        self._process.terminate()
+        self._process.wait(timeout=timeout)
 
     def __enter__(self):
         return self
