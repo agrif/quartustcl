@@ -88,6 +88,20 @@ class QuartusTcl:
     result is a list, you will need to use `parse` to turn it into a
     Python list.
 
+    #### Closing
+
+    The Tcl subprocess will be automatically closed when this object
+    goes out of scope. For more explicit control, use the `close`
+    method. This object can also be used as a context manager:
+
+    ```python
+    with quartustcl.QuartusTcl() as quartus:
+        # ... use quartus ...
+    ```
+
+    The Tcl subprocess will be closed automatically at the end of the
+    block.
+
     """
     def __init__(self, args=['quartus_stp', '-s'], debug=False):
         self.debug = debug
