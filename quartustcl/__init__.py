@@ -274,5 +274,31 @@ class QuartusTcl:
             args.append(self.quote(str(v)))
         return self.eval(' '.join(args))
 
+    def close(self, timeout=None):
+        """Close the Tcl subprocess. After calling this, you will no longer be
+        able to evaluate Tcl using this object.
+
+        If **timeout** is specified, determines how long to wait for
+        the subprocess to exit.
+
+        This is safe to call multiple times.
+
+        """
+
+        self.process.stdin.close()
+        self.process.stdout.close()
+        self.process.terminate()
+        self.process.wait(timeout=timeout)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
+
+    def __del__(self):
+        # try to never leave a zombie process
+        self.close()
+
     def __getattr__(self, attr):
         return functools.partial(self.call, attr)

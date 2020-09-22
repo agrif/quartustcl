@@ -3,14 +3,8 @@ import unittest
 import quartustcl
 
 
-quartus = None
-
-
 def make_tcl():
-    global quartus
-    if quartus is None:
-        quartus = quartustcl.QuartusTcl(args=['tclsh'])
-    return quartus
+    return quartustcl.QuartusTcl(args=['tclsh'])
 
 
 class TestParse(unittest.TestCase):
@@ -69,3 +63,20 @@ class TestQuote(unittest.TestCase):
         q = make_tcl()
         data = q.parse(q.call('list', *original))
         self.assertEqual(data, original)
+
+
+class TestClose(unittest.TestCase):
+    def test_close(self):
+        q = make_tcl()
+        self.assertEqual(q.expr('1 + 2'), '3')
+        q.close()
+        with self.assertRaises(ValueError):
+            q.expr('1 + 2')
+        q.close()
+
+    def test_with(self):
+        tcl = make_tcl()
+        with tcl as q:
+            self.assertEqual(q.expr('1 + 2'), '3')
+        with self.assertRaises(ValueError):
+            tcl.expr('1 + 2')
