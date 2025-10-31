@@ -1,0 +1,75 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    name: ${{ matrix.name }} (Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Test
+            runner: ubuntu-24.04
+            python: '3.9'
+            toxenv: py39
+
+          - name: Test
+            runner: ubuntu-24.04
+            python: '3.10'
+            toxenv: py310
+
+          - name: Test
+            runner: ubuntu-24.04
+            python: '3.11'
+            toxenv: py311
+
+          - name: Test
+            runner: ubuntu-24.04
+            python: '3.12'
+            toxenv: py312
+
+          - name: Test
+            runner: ubuntu-24.04
+            python: '3.13'
+            toxenv: py313
+
+          - name: Test
+            runner: ubuntu-24.04
+            python: '3.14'
+            toxenv: py314
+
+          # lints, builds, other smoke tests
+          - name: Lint and Code Style
+            runner: ubuntu-24.04
+            python: '3.14'
+            toxenv: lint
+
+          - name: Documentation
+            runner: ubuntu-24.04
+            python: '3.14'
+            toxenv: docs
+
+          - name: Build
+            runner: ubuntu-24.04
+            python: '3.14'
+            toxenv: build
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Print Python Version
+        run: python3 -V
+
+      - name: Install Dependencies
+        run: pip install --upgrade tox setuptools virtualenv
+
+      - name: Run ${{ matrix.name }}
+        run: tox run -e ${{ matrix.toxenv }}

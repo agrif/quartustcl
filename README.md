@@ -2,7 +2,7 @@ quartustcl
 ----------
 
 [![PyPI](https://img.shields.io/pypi/v/quartustcl)](https://pypi.org/project/quartustcl/)
-[![Travis CI](https://img.shields.io/travis/com/agrif/quartustcl/master)](https://travis-ci.com/agrif/quartustcl)
+[![GitHub Actions](https://github.com/agrif/quartustcl/actions/workflows/test.yaml/badge.svg)](https://github.com/agrif/quartustcl/actions/workflows/test.yaml)
 [![Read the Docs](https://img.shields.io/readthedocs/quartustcl/latest)][docs]
 
  [docs]: https://quartustcl.readthedocs.io/en/latest/
