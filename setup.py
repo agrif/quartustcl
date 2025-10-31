@@ -39,13 +39,14 @@ setup(
 
     setup_requires=[
         'setuptools_git >= 0.3',
-        'better-setuptools-git-version >= 1.0',
+        'bad-setuptools-git-version >= 1.0.12',
     ],
     extras_require={
         'docs': ['mkdocs >= 1.2, < 1.3', 'mkautodoc >= 0.2.0'],
     },
     version_config={
-        'version_format': '{tag}.dev{sha}',
+        'template': '{tag}',
+        'starting_version': '0.1',
     },
 
     packages=find_packages(exclude=['tests', 'tests.*']),
